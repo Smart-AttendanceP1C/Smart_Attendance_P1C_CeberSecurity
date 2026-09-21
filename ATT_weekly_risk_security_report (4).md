@@ -1,10 +1,4 @@
 # Security Review Report — Weekly Attendance Risk Module (ATT Project)
-
-**Component:** AI-based weekly attendance risk prediction (ATT-FR-10)
-**Files reviewed:** `train_weekly_risk_model.py`, `weekly_risk_api.py`, `weekly_risk_model.joblib`
-**Reviewer:** Cybersecurity Team Member — ATT Project
-**Date:** 21 September 2026
-
 ## 1. Purpose and Context
 
 This module implements the AI risk-prediction feature required by the
