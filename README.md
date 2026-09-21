@@ -1,1 +1,0 @@
-# Smart_Attendance_P1C_CeberSecurity
