@@ -1,11 +1,6 @@
 # Threat Model
 ## Smart Attendance & Student Presence Verification System
 
-**Status:** Preliminary Analysis — Version 1.0
-**Date:** 21 September 2026
-
----
-
 ## 1. Overview
 
 This document presents an initial threat model for the Smart Attendance &
