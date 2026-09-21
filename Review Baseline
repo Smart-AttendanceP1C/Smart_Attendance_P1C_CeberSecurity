@@ -1,0 +1,126 @@
+# Security Review Report — Rule-Based Baseline Script (ATT Project)
+
+**File reviewed:** `baseline.py` (rule-based baseline + weekly feature
+engineering, Data Analyst track, Step 5)
+**Reviewer:** Cybersecurity Team Member — ATT Project
+**Date:** 21 September 2026
+**Review type:** Static code review (this script runs offline, not as a
+network-facing API, so verification was done by reading the code itself
+rather than sending live requests).
+
+---
+
+## 1. Purpose and Context
+
+This script reads raw enrollment and attendance data and produces a
+weekly features-and-flags table used both as a rule-based baseline and
+as the training input for the logistic regression risk model
+(`train_weekly_risk_model.py`). Its output file directly carries real
+student attendance data, so weaknesses in how that output is produced or
+stored are relevant to the same student-data protection requirement
+(ATT-FR-01) that applies to the rest of the ATT system.
+
+---
+
+## 2. Confirmed Findings
+
+### Finding 1 — Student Data Saved in Plain, Unprotected Form
+**Code:**
+```python
+features_clean.to_excel(writer, sheet_name="WeeklyFeaturesAndFlags", index=False)
+```
+**Description:** The output file stores `student_id` in plain, readable
+form for every row, with no anonymization, hashing, or encryption applied
+anywhere in the script.
+
+**How this was verified:** Read this line and everything preceding it,
+then searched the full script for any of `encrypt`, `hash`, or
+`anonymize` — none appear anywhere in the file. This confirms no data
+protection step exists between reading the raw data and writing the
+final file.
+
+**Relevance to the project:** This is the same file consumed later by
+the risk-prediction model, so any exposure here carries real student
+attendance data outside of any access-control layer the rest of the
+system enforces.
+
+---
+
+### Finding 2 — No Input Validation on Source Data
+**Code:**
+```python
+enrollment = pd.read_excel(IN_PATH, sheet_name="Enrollment")
+sessions = pd.read_excel(IN_PATH, sheet_name="AttendanceSessions")
+events = pd.read_excel(IN_PATH, sheet_name="AttendanceEvents")
+```
+**Description:** The script never checks that the expected sheets or
+columns (`status`, `week_number`, `session_id`, etc.) exist or contain
+valid values before using them.
+
+**How this was verified:** Read the script from top to bottom and
+searched for `try` or `except` — neither appears anywhere in the file.
+This confirms there is no error handling or validation at any point in
+the pipeline.
+
+**Relevance to the project:** If the source file is malformed,
+incomplete, or has unexpected values, the script will either crash
+without a clear explanation or silently produce incorrect features and
+flags that later feed into the risk model.
+
+---
+
+### Finding 3 — No Logging or Audit Trail for Script Execution
+**Description:** There is no persistent record of who ran the script,
+when, or against which version of the input data.
+
+**How this was verified:** Searched the full script for `logging` or
+`log` — found only `print()` statements used for console output during
+execution. `print()` output disappears once the terminal session ends,
+so there is no durable record of any run.
+
+**Relevance to the project:** If a student is later found to have been
+incorrectly flagged (or missed) by the risk system, there is currently
+no record connecting a specific script run to a specific data snapshot
+to investigate what happened.
+
+---
+
+### Finding 4 — Hardcoded, Windows-Specific File Path
+**Code:**
+```python
+IN_PATH = "data\\processed\\ATT_demo_dataset_converted.xlsx"
+```
+**Description:** The input path is hardcoded using Windows-style
+backslashes.
+
+**How this was verified:** Directly visible in the source line itself —
+`\\` is a Windows-style path separator, as opposed to `/` used on
+Linux/Mac. No further testing was needed to confirm this; it is stated
+literally in the code.
+
+**Relevance to the project:** This is a portability issue rather than a
+direct security risk on its own — it indicates the script has only been
+tested in one environment and has not been reviewed for the environment
+it will actually run in (e.g., a Linux-based backend server).
+
+---
+
+## 3. Summary Table
+
+| # | Finding | Verified By |
+|---|---------|-------------|
+| 1 | Student data saved in plain, unprotected form | Searched code for encryption/hashing/anonymization — none found |
+| 2 | No input validation on source data | Searched code for `try`/`except` — none found |
+| 3 | No logging/audit trail for script execution | Searched code for `logging` — only `print()` found |
+| 4 | Hardcoded, Windows-specific file path | Directly visible in the `IN_PATH` line |
+
+---
+
+## 4. Notes
+
+- This review is limited to what is directly observable in the code
+  itself. No assumptions were made about server permissions, deployment
+  configuration, or who can access the output directory — those would
+  need to be verified separately against the actual deployment.
+- No test was run against a live system; verification consisted entirely
+  of reading and searching the script's source code.
