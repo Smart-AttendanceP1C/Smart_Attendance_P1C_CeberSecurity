@@ -1,15 +1,5 @@
 # Security Review Report — Rule-Based Baseline Script (ATT Project)
 
-**File reviewed:** `baseline.py` (rule-based baseline + weekly feature
-engineering, Data Analyst track, Step 5)
-**Reviewer:** Cybersecurity Team Member — ATT Project
-**Date:** 21 September 2026
-**Review type:** Static code review (this script runs offline, not as a
-network-facing API, so verification was done by reading the code itself
-rather than sending live requests).
-
----
-
 ## 1. Purpose and Context
 
 This script reads raw enrollment and attendance data and produces a
